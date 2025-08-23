@@ -392,7 +392,7 @@ Value Worker::quiesce(Position& pos, Stack* ss, Value alpha, Value beta, i32 ply
     for (Move m = moves.next(); m != Move::none(); m = moves.next()) {
         // QS SEE Pruning
         if (best_value > -VALUE_WIN) {
-            if (!is_in_check && moves_searched >= 2) {
+            if (!is_in_check && moves_searched >= 4) {
                 break;
             }
 
