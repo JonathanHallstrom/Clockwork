@@ -274,8 +274,8 @@ Value Worker::search(Position& pos, Stack* ss, Value alpha, Value beta, Depth de
         Value value;
         if (depth >= 3 && moves_played >= 4) {
             i32 reduction =
-              static_cast<i32>(0.77 + std::log(depth) * std::log(moves_played) / 2.36);
-            reduction -= PV_NODE;
+              static_cast<i32>(1.77 + std::log(depth) * std::log(moves_played) / 2.36);
+            reduction -= 2 * PV_NODE;
 
             if (!quiet) {
                 reduction = std::min(reduction, 1);
