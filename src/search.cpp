@@ -404,7 +404,7 @@ Value Worker::search(
             reduction -= PV_NODE;
 
             if (cutnode) {
-                reduction += 1;
+                reduction += 2;
             }
 
             if (tt_data && tt_data->move.is_capture()) {
