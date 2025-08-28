@@ -413,7 +413,7 @@ Value Worker::search(
             }
 
             if (!quiet) {
-                reduction = std::min(reduction, 1);
+                reduction = std::min(reduction, 2);
             }
 
             Depth reduced_depth = std::clamp<Depth>(new_depth - reduction, 1, new_depth);
