@@ -433,6 +433,10 @@ Value Worker::search(
                 reduction += 1;
             }
 
+            if (quiet) {
+                reduction -= move_history / 8192;
+            }
+
             if (!quiet) {
                 reduction = std::min(reduction, 1);
             }
