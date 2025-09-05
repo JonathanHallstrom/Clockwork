@@ -40,19 +40,21 @@ void History::update_quiet_stats(
 }
 
 i32 History::get_noisy_stats(const Position& pos, Move move) const {
-    usize     stm_idx  = static_cast<usize>(pos.active_color());
-    PieceType pt       = pos.piece_at(move.from());
-    usize     pt_idx   = static_cast<usize>(pt) - static_cast<usize>(PieceType::Pawn);
-    PieceType captured = move.is_en_passant() ? PieceType::Pawn : pos.piece_at(move.to());
-    return m_capt_hist[stm_idx][pt_idx][static_cast<usize>(captured)][move.to().raw];
+    auto      from_attacked = pos.attack_table(~pos.active_color()).read(move.from()) != 0;
+    usize     stm_idx       = static_cast<usize>(pos.active_color());
+    PieceType pt            = pos.piece_at(move.from());
+    usize     pt_idx        = static_cast<usize>(pt) - static_cast<usize>(PieceType::Pawn);
+    PieceType captured      = move.is_en_passant() ? PieceType::Pawn : pos.piece_at(move.to());
+    return m_capt_hist[stm_idx][pt_idx][static_cast<usize>(captured)][move.to().raw][from_attacked];
 }
 
 void History::update_noisy_stats(const Position& pos, Move move, i32 bonus) {
-    usize     stm_idx  = static_cast<usize>(pos.active_color());
-    PieceType pt       = pos.piece_at(move.from());
-    usize     pt_idx   = static_cast<usize>(pt) - static_cast<usize>(PieceType::Pawn);
-    PieceType captured = move.is_en_passant() ? PieceType::Pawn : pos.piece_at(move.to());
-    update_hist_entry(m_capt_hist[stm_idx][pt_idx][static_cast<usize>(captured)][move.to().raw],
+    auto      from_attacked = pos.attack_table(~pos.active_color()).read(move.from()) != 0;
+    usize     stm_idx       = static_cast<usize>(pos.active_color());
+    PieceType pt            = pos.piece_at(move.from());
+    usize     pt_idx        = static_cast<usize>(pt) - static_cast<usize>(PieceType::Pawn);
+    PieceType captured      = move.is_en_passant() ? PieceType::Pawn : pos.piece_at(move.to());
+    update_hist_entry(m_capt_hist[stm_idx][pt_idx][static_cast<usize>(captured)][move.to().raw][from_attacked],
                       bonus);
 }
 
