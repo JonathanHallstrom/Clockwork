@@ -329,7 +329,7 @@ Value Worker::search(
             return 0;
         }
         // Insufficient material check
-        if (pos.is_insufficient_material()){
+        if (pos.is_insufficient_material()) {
             return 0;
         }
     }
@@ -633,15 +633,22 @@ Value Worker::quiesce(const Position& pos, Stack* ss, Value alpha, Value beta, i
         moves.skip_quiets();
     }
 
-    Move best_move = Move::none();
+    Move  best_move      = Move::none();
     Value best_value     = static_eval;
     u32   moves_searched = 0;
 
     // Iterate over the move list
     for (Move m = moves.next(); m != Move::none(); m = moves.next()) {
-        // QS SEE Pruning
-        if (best_value > -VALUE_WIN && !SEE::see(pos, m, tuned::quiesce_see_threshold)) {
-            continue;
+        if (best_value > -VALUE_WIN) {
+            // QS Late Move Pruning 
+            if (moves_searched >= 3) {
+                break;
+            }
+
+            // QS SEE Pruning
+            if (!SEE::see(pos, m, tuned::quiesce_see_threshold)) {
+                continue;
+            }
         }
 
         // Do move
@@ -671,7 +678,7 @@ Value Worker::quiesce(const Position& pos, Stack* ss, Value alpha, Value beta, i
             best_value = value;
 
             if (value > alpha) {
-                alpha = value;
+                alpha     = value;
                 best_move = m;
 
                 if (value >= beta) {
