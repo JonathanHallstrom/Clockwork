@@ -487,7 +487,7 @@ Value Worker::search(
     }
 
     if (!PV_NODE && !is_in_check && depth <= tuned::rfp_depth && !excluded
-        && tt_adjusted_eval >= beta + tuned::rfp_margin * depth) {
+        && tt_adjusted_eval >= beta + tuned::rfp_margin * depth && !is_being_mated_score(beta)) {
         return tt_adjusted_eval;
     }
 
@@ -526,8 +526,8 @@ Value Worker::search(
     }
 
     // Razoring
-    if (!PV_NODE && !excluded && !is_in_check && depth <= tuned::razor_depth
-        && ss->static_eval + tuned::razor_margin * depth < alpha) {
+    if (!PV_NODE && !excluded && !is_mate_score(alpha) && !is_in_check
+        && depth <= tuned::razor_depth && ss->static_eval + tuned::razor_margin * depth < alpha) {
         const Value razor_score = quiesce<IS_MAIN>(pos, ss, alpha, beta, ply);
         if (razor_score <= alpha) {
             return razor_score;
