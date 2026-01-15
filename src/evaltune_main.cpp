@@ -30,7 +30,7 @@ using namespace Clockwork::Autograd;
 
 int main() {
 
-    const auto WDL = 0.0;
+    const auto WDL = 0.5;
 
     // Todo: make these CLI-specifiable
     const size_t batch_size       = 16 * 16384;
@@ -147,7 +147,12 @@ int main() {
                 continue;
             }
 
-            results.push_back(std::lerp(WDL, wdl, score));
+            auto result = std::lerp(score, wdl, WDL);
+
+            assert(result >= std::min(score, wdl));
+            assert(result <= std::max(score, wdl));
+
+            results.push_back(result);
         }
     }
 
