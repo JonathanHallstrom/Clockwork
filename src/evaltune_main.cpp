@@ -1,3 +1,4 @@
+#include "common.hpp"
 #include "eval_constants.hpp"
 #include "eval_types.hpp"
 #include "evaluation.hpp"
@@ -30,7 +31,6 @@ using namespace Clockwork::Autograd;
 
 int main() {
 
-    const auto WDL = 0.5;
 
     // Todo: make these CLI-specifiable
     const size_t batch_size       = 16 * 16384;
@@ -113,9 +113,9 @@ int main() {
 
             std::string score_str = line.substr(pipe1 + 1, pipe2 - pipe1 - 1);
 
-            double score = 0.0;
+            f64 score = 0.0;
             try {
-                score = std::stof(score_str);
+                score = std::stod(score_str);
             } catch (...) {
                 std::cerr << "Failed to parse score: " << score_str << "\n";
                 continue;
@@ -131,9 +131,9 @@ int main() {
 
             std::string result_str = line.substr(pipe2 + 1);
 
-            double wdl = 0.0;
+            f64 wdl = 0.0;
             try {
-                wdl = std::stof(result_str);
+                wdl = std::stod(result_str);
             } catch (...) {
                 std::cerr << "Failed to parse game result: " << result_str << "\n";
                 continue;
@@ -146,8 +146,10 @@ int main() {
                 std::cerr << "invalid game result (>1): " << wdl << "\n";
                 continue;
             }
+            usize num_pieces = (*parsed).piece_count(Color::White) + (*parsed).piece_count(Color::Black);
 
-            auto result = std::lerp(score, wdl, WDL);
+            f64 wdl_fraction = 1.0 - num_pieces / 32.0;
+            auto result = std::lerp(score, wdl, wdl_fraction);
 
             assert(result >= std::min(score, wdl));
             assert(result <= std::max(score, wdl));
