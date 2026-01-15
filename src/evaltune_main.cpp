@@ -30,7 +30,8 @@ using namespace Clockwork;
 using namespace Clockwork::Autograd;
 
 int main() {
-
+    const f64 WDL = 0.5; // the WDL for 16 pieces remaining
+    const f64 SLOPE = 0.75; // the slop of the line passing (closer to 1 = more aggressively scale the WDL with the remaining pieces)
 
     // Todo: make these CLI-specifiable
     const size_t batch_size       = 16 * 16384;
@@ -44,7 +45,7 @@ int main() {
       "data/v4_8knpm.txt", "data/v4_16knpm.txt", "data/v4.1_5knpm.txt", "data/v4.1_8knpm.txt",
     };
     for (auto& file : fenFiles) {
-        file += "_siriusformat";
+        file += "_siriusformat_512";
     }
 
     const u32 thread_count = std::max<u32>(1, std::thread::hardware_concurrency());
@@ -148,7 +149,9 @@ int main() {
             }
             usize num_pieces = (*parsed).piece_count(Color::White) + (*parsed).piece_count(Color::Black);
 
-            f64 wdl_fraction = 1.0 - num_pieces / 32.0;
+            f64 remaining_pieces = 1.0 - (num_pieces - 2.0) / 30.0;
+
+            f64 wdl_fraction = std::lerp(WDL, remaining_pieces, SLOPE);
             auto result = std::lerp(score, wdl, wdl_fraction);
 
             assert(result >= std::min(score, wdl));
