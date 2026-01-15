@@ -14,6 +14,7 @@
 
 #include <algorithm>
 #include <barrier>
+#include <cmath>
 #include <fstream>
 #include <functional>
 #include <iomanip>
@@ -29,6 +30,8 @@ using namespace Clockwork::Autograd;
 
 int main() {
 
+    const auto WDL = 0.0;
+
     // Todo: make these CLI-specifiable
     const size_t batch_size       = 16 * 16384;
     const size_t micro_batch_size = 160;
@@ -37,8 +40,7 @@ int main() {
     std::vector<f64>      results;
 
     const std::vector<std::string> fenFiles = {
-      "data/dfrcv1.txt",   "data/dfrcv0.txt",    "data/v3.txt",         "data/v4_5knpm.txt",
-      "data/v4_8knpm.txt", "data/v4_16knpm.txt", "data/v4.1_5knpm.txt", "data/v4.1_8knpm.txt",
+        "data/combined_siriusformat.txt"
     };
 
     const u32 thread_count = std::max<u32>(1, std::thread::hardware_concurrency() / 2);
@@ -87,34 +89,61 @@ int main() {
 
         std::string line;
         while (std::getline(fenFile, line)) {
-            size_t pos = line.find(';');
-            if (pos == std::string::npos) {
-                std::cerr << "Bad line in " << filename << ": " << line << "\n";
+            size_t pipe1 = line.find('|');
+            size_t pipe2 = line.find('|', pipe1 + 1);
+
+            if (pipe1 == std::string::npos || pipe2 == std::string::npos) {
+                std::cerr << "Bad line format in " << filename << ": " << line << "\n";
                 continue;
             }
 
-            std::string fen    = line.substr(0, pos);
-            auto        parsed = Position::parse(fen);
-
+            std::string fen = line.substr(0, pipe1);
+            while (!fen.empty() && std::isspace(fen.back())) {
+                fen.pop_back();
+            }
+            auto parsed = Position::parse(fen);
             if (!parsed) {
-                std::cerr << "Failed to parse FEN in " << filename << ": " << fen << "\n";
                 continue;
             }
-
             positions.push_back(*parsed);
 
-            std::string result = line.substr(pos + 1);
-            result.erase(std::remove_if(result.begin(), result.end(), ::isspace), result.end());
+            std::string score_str = line.substr(pipe1 + 1, pipe2 - pipe1 - 1);
 
-            if (result == "w") {
-                results.push_back(1.0);
-            } else if (result == "d") {
-                results.push_back(0.5);
-            } else if (result == "b") {
-                results.push_back(0.0);
-            } else {
-                std::cerr << "Invalid result in " << filename << ": " << line << "\n";
+            double score = 0.0;
+            try {
+                score = std::stof(score_str);
+            } catch (...) {
+                std::cerr << "Failed to parse score: " << score_str << "\n";
+                continue;
             }
+            if (score < 0.0) {
+                std::cerr << "invalid score (<0): " << score << "\n";
+                continue;
+            }
+            if (score > 1.0) {
+                std::cerr << "invalid score (>1): " << score << "\n";
+                continue;
+            }
+
+            std::string result_str = line.substr(pipe2 + 1);
+
+            double wdl = 0.0;
+            try {
+                wdl = std::stof(result_str);
+            } catch (...) {
+                std::cerr << "Failed to parse game result: " << result_str << "\n";
+                continue;
+            }
+            if (wdl < 0.0) {
+                std::cerr << "invalid game result (<0): " << wdl << "\n";
+                continue;
+            }
+            if (wdl > 1.0) {
+                std::cerr << "invalid game result (>1): " << wdl << "\n";
+                continue;
+            }
+
+            results.push_back(std::lerp(WDL, wdl, score));
         }
     }
 
