@@ -30,8 +30,8 @@ using namespace Clockwork;
 using namespace Clockwork::Autograd;
 
 int main() {
-    const f64 WDL = 0.5; // the WDL for 16 pieces remaining
-    const f64 SLOPE = 0.75; // the slop of the line passing (closer to 1 = more aggressively scale the WDL with the remaining pieces)
+    const f64 WDL = 0.5; // the WDL for 17 pieces remaining
+    const f64 SLOPE = 0.5; // the slop of the line passing (closer to 1 = more aggressively scale the WDL with the remaining pieces)
 
     // Todo: make these CLI-specifiable
     const size_t batch_size       = 16 * 16384;
