@@ -5,6 +5,7 @@
 #include <array>
 #include <atomic>
 #include <bit>
+#include <type_traits>
 
 namespace Clockwork {
 
@@ -40,23 +41,24 @@ struct TTCluster {
 };
 
 struct TTClusterMemory {
-    alignas(32) std::array<std::atomic<u64>, 4> data;
+    using T = std::conditional_t<std::atomic<u128>::is_always_lock_free, u128, u64>;
+    constexpr static auto ELEMENTS = 32 / sizeof(T);
+
+    alignas(32) std::array<std::atomic<T>, ELEMENTS> data;
 
     [[nodiscard]] auto load() const -> TTCluster {
-        std::array<u64, 4> out;
-        out[0] = this->data[0].load(std::memory_order_relaxed);
-        out[1] = this->data[1].load(std::memory_order_relaxed);
-        out[2] = this->data[2].load(std::memory_order_relaxed);
-        out[3] = this->data[3].load(std::memory_order_relaxed);
+        std::array<T, ELEMENTS> out;
+        for (usize i = 0; i < ELEMENTS; ++i) {
+            out[i] = this->data[i].load(std::memory_order_relaxed);
+        }
         return std::bit_cast<TTCluster>(out);
     }
 
     auto store(TTCluster cluster) {
-        std::array<u64, 4> mem = std::bit_cast<std::array<u64, 4>>(cluster);
-        this->data[0].store(mem[0], std::memory_order_relaxed);
-        this->data[1].store(mem[1], std::memory_order_relaxed);
-        this->data[2].store(mem[2], std::memory_order_relaxed);
-        this->data[3].store(mem[3], std::memory_order_relaxed);
+        auto mem = std::bit_cast<std::array<T, ELEMENTS>>(cluster);
+        for (usize i = 0; i < ELEMENTS; ++i) {
+            this->data[i].store(mem[i], std::memory_order_relaxed);
+        }
     }
 };
 
