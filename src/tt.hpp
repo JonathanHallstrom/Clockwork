@@ -48,6 +48,7 @@ struct TTClusterMemory {
 
     [[nodiscard]] auto load() const -> TTCluster {
         std::array<T, ELEMENTS> out;
+#pragma GCC unroll ELEMENTS
         for (usize i = 0; i < ELEMENTS; ++i) {
             out[i] = this->data[i].load(std::memory_order_relaxed);
         }
@@ -56,6 +57,7 @@ struct TTClusterMemory {
 
     auto store(TTCluster cluster) {
         auto mem = std::bit_cast<std::array<T, ELEMENTS>>(cluster);
+#pragma GCC unroll ELEMENTS
         for (usize i = 0; i < ELEMENTS; ++i) {
             this->data[i].store(mem[i], std::memory_order_relaxed);
         }
